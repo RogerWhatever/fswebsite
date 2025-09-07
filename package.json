@@ -1,0 +1,24 @@
+{
+  "name": "edushare-bsc-cs",
+  "version": "1.0.0",
+  "description": "BSC Computer Science Study Materials Sharing Platform",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "multer": "^1.4.5-lts.1",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "lowdb": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": ["education", "file-sharing", "student-portal", "bsc-cs"],
+  "author": "Rudra Ambike",
+  "license": "MIT"
+}

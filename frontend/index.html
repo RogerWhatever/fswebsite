@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduShare - BSC CS Study Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-logo">
+        <i class="fas fa-book-open"></i>
+        <span>EduShare</span>
+    </div>
+
+    <div class="nav-center">
+        <ul class="nav-menu">
+            <li class="nav-item"><a href="#home" class="nav-link">Home</a></li>
+            <li class="nav-item"><a href="#subjects" class="nav-link">Subjects</a></li>
+            <li class="nav-item"><a href="#about" class="nav-link">About</a></li>
+            <li class="nav-item"><a href="#contact" class="nav-link">Contact</a></li>
+        </ul>
+    </div>
+
+    <div class="nav-auth">
+        <button class="login-btn" id="loginBtn">Login</button>
+        <button class="my-uploads-btn" id="myUploadsBtn" style="display: none;">My Uploads</button>
+        <button class="register-btn" id="registerBtn">Register</button>
+        <button id="darkModeToggle" aria-label="Toggle dark mode" class="dark-mode-toggle">
+            <i class="fas fa-moon"></i>
+        </button>
+    </div>
+
+    <div class="hamburger">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+    </div>
+</nav>
+
+    <section id="home" class="hero fade-in-section">
+        <div class="hero-content">
+            <h1>Collaborate on BSC Computer Science Materials</h1>
+            <p>Upload, download, and share study resources with peers to succeed together.</p>
+            <button class="cta-btn" id="heroCta">Explore Subjects</button>
+        </div>
+        <div class="hero-image">
+            <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80" alt="Students collaborating">
+        </div>
+    </section>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Login to Your Account</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="form-btn">Login</button>
+            </form>
+            <p class="form-footer">Don't have an account? <a href="#" id="switchToRegister">Register</a></p>
+        </div>
+    </div>
+
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Create an Account</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="registerName">Full Name</label>
+                    <input type="text" id="registerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerConfirmPassword">Confirm Password</label>
+                    <input type="password" id="registerConfirmPassword" required>
+                </div>
+                <button type="submit" class="form-btn">Register</button>
+            </form>
+            <p class="form-footer">Already have an account? <a href="#" id="switchToLogin">Login</a></p>
+        </div>
+    </div>
+
+    <div id="myUploadsModal" class="modal">
+        <div class="modal-content my-uploads-modal">
+            <span class="close">&times;</span>
+            <h2>My Uploads</h2>
+            <div class="uploads-content">
+                <div class="uploads-loading">Loading your uploads...</div>
+            </div>
+        </div>
+    </div>
+
+    <section id="subjects" class="subjects fade-in-section">
+        <h2>BSC CS Subjects</h2>
+        <p class="section-description">Select a subject to view and upload study materials</p>
+        <div class="subjects-grid">
+        </div>
+    </section>
+
+    <div id="subjectModal" class="modal subject-modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="subjectModalTitle">Subject Name</h2>
+            <div class="unit-tabs">
+            </div>
+            <div class="unit-content">
+            </div>
+        </div>
+    </div>
+
+    <section id="about" class="about fade-in-section">
+        <h2>About EduShare</h2>
+        <div class="about-content">
+            <div class="about-text">
+                <p>EduShare is a platform designed for BSC Computer Science students to share and access study materials. Our mission is to facilitate collaborative learning and make quality educational resources accessible to everyone.</p>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> Upload and organize materials by subject and unit</li>
+                    <li><i class="fas fa-check-circle"></i> Download resources shared by peers</li>
+                    <li><i class="fas fa-check-circle"></i> Rate and review uploaded materials</li>
+                    <li><i class="fas fa-check-circle"></i> Connect with other students</li>
+                </ul>
+            </div>
+            <div class="about-image">
+                <img src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80" alt="About EduShare">
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="contact fade-in-section">
+        <h2>Contact Us</h2>
+        <div class="contact-content">
+            <div class="contact-info">
+                <h3>Get in Touch</h3>
+                <p><i class="fas fa-envelope"></i> support@edushare.com</p>
+                <p><i class="fas fa-phone"></i> +1 (555) 123-4567</p>
+                <p><i class="fas fa-map-marker-alt"></i> 123 Education Street, Learning City</p>
+            </div>
+            <form class="contact-form">
+                <div class="form-group">
+                    <input type="text" placeholder="Your Name" required>
+                </div>
+                <div class="form-group">
+                    <input type="email" placeholder="Your Email" required>
+                </div>
+                <div class="form-group">
+                    <textarea placeholder="Your Message" rows="5" required></textarea>
+                </div>
+                <button type="submit" class="form-btn">Send Message</button>
+            </form>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>EduShare</h3>
+                <p>Making education accessible and collaborative for everyone.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#subjects">Subjects</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Follow Us</h3>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2023 EduShare. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
