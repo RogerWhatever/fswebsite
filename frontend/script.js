@@ -272,8 +272,8 @@ function setupIntersectionObserver() {
 
     sections.forEach(section => {
         observer.observe(section);
-        // Force visibility for about and contact sections in case observer fails
-        if (section.id === 'about' || section.id === 'contact') {
+        // Force visibility for about, contact, and team sections in case observer fails
+        if (section.id === 'about' || section.id === 'contact' || section.id === 'team') {
             setTimeout(() => {
                 section.classList.add('is-visible');
             }, 100);
