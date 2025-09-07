@@ -61,5 +61,3 @@ Register with email: `admin@gmail.com` to get admin privileges:
 6. PHP & MySQL Lab
 7. Human & Computer Interaction
 8. Basics of Nutraceuticals & Cosmeceuticals
-
-SS
