@@ -81,15 +81,59 @@ const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
         folder: 'edushare-files',
-        allowed_formats: ['pdf', 'doc', 'docx', 'xlsx', 'pptx', 'txt'],
-        resource_type: 'raw'
+        resource_type: 'auto', // Changed from 'raw' to 'auto' for better format detection
+        // Removed allowed_formats as it's causing issues
+        public_id: (req, file) => {
+            // Generate a unique filename
+            const timestamp = Date.now();
+            const randomString = Math.random().toString(36).substring(2, 15);
+            const originalName = file.originalname.replace(/\.[^/.]+$/, ""); // Remove extension
+            const sanitizedName = originalName.replace(/[^a-zA-Z0-9]/g, '_'); // Sanitize filename
+            return `${sanitizedName}-${timestamp}-${randomString}`;
+        }
     },
 });
 
 const upload = multer({ 
     storage: storage,
     limits: {
-        fileSize: 10 * 1024 * 1024 // 10MB limit
+        fileSize: 25 * 1024 * 1024 // 25MB limit
+    },
+    fileFilter: (req, file, cb) => {
+        console.log('File filter - Original name:', file.originalname);
+        console.log('File filter - MIME type:', file.mimetype);
+        
+        // More comprehensive file type checking
+        const allowedTypes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'text/plain',
+            'application/rtf',
+            'application/octet-stream' // Allow for cases where MIME type isn't detected
+        ];
+        
+        const allowedExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.rtf'];
+        
+        const fileExtension = file.originalname.toLowerCase().slice(file.originalname.lastIndexOf('.'));
+        const mimeTypeAllowed = allowedTypes.includes(file.mimetype);
+        const extensionAllowed = allowedExtensions.includes(fileExtension);
+        
+        console.log('File extension:', fileExtension);
+        console.log('MIME type allowed:', mimeTypeAllowed);
+        console.log('Extension allowed:', extensionAllowed);
+        
+        if (mimeTypeAllowed || extensionAllowed) {
+            cb(null, true);
+        } else {
+            const error = new Error(`File type not allowed. Allowed types: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, RTF. Received: ${file.mimetype} with extension ${fileExtension}`);
+            error.code = 'INVALID_FILE_TYPE';
+            cb(error, false);
+        }
     }
 });
 
@@ -286,19 +330,71 @@ app.get('/api/files', ensureDbConnection, async (req, res) => {
 // File Upload
 app.post('/api/files/upload', ensureDbConnection, authenticateToken, upload.single('file'), async (req, res) => {
     try {
+        console.log('Upload attempt - File:', req.file ? 'Present' : 'Missing');
+        console.log('Upload attempt - Body:', req.body);
+        console.log('Upload attempt - User:', req.user);
+
         if (!req.file) {
             return res.status(400).json({ message: 'No file uploaded.' });
         }
 
+        // Log file details for debugging
+        console.log('File details:', {
+            originalname: req.file.originalname,
+            mimetype: req.file.mimetype,
+            size: req.file.size,
+            path: req.file.path,
+            filename: req.file.filename,
+            public_id: req.file.public_id
+        });
+
         const { title, description, subjectId, unit } = req.body;
         
+        // Validate required fields
+        if (!title || !description || !subjectId || unit === undefined) {
+            // Clean up uploaded file if validation fails
+            try {
+                const cloudinaryId = req.file.public_id || req.file.filename;
+                if (cloudinaryId) {
+                    await cloudinary.uploader.destroy(cloudinaryId, { 
+                        resource_type: 'auto',
+                        invalidate: true 
+                    });
+                }
+            } catch (deleteError) {
+                console.error('Failed to delete file from Cloudinary after validation error:', deleteError);
+            }
+            return res.status(400).json({ 
+                message: 'Missing required fields: title, description, subjectId, or unit' 
+            });
+        }
+
         // Check if this is a syllabus upload (unit 0) and user is admin
         if (parseInt(unit) === 0 && !isAdmin(req.user.email)) {
             // Delete uploaded file from Cloudinary if user is not admin
-            await cloudinary.uploader.destroy(req.file.filename, { resource_type: 'raw' });
+            try {
+                const cloudinaryId = req.file.public_id || req.file.filename;
+                if (cloudinaryId) {
+                    await cloudinary.uploader.destroy(cloudinaryId, { 
+                        resource_type: 'auto',
+                        invalidate: true 
+                    });
+                }
+            } catch (deleteError) {
+                console.error('Failed to delete file from Cloudinary:', deleteError);
+            }
             return res.status(403).json({ message: 'Only admin@gmail.com can upload syllabus files.' });
         }
         
+        // Check if File model is available
+        if (!mongoose.models.File) {
+            console.error('File model not available');
+            return res.status(500).json({ message: 'File model not loaded. Please try again.' });
+        }
+
+        // Get file extension for better identification
+        const fileExtension = req.file.originalname.toLowerCase().slice(req.file.originalname.lastIndexOf('.'));
+
         const newFile = new File({
             title,
             description,
@@ -306,19 +402,78 @@ app.post('/api/files/upload', ensureDbConnection, authenticateToken, upload.sing
             unit: parseInt(unit),
             uploadedBy: req.user.email,
             filename: req.file.originalname,
-            cloudinaryId: req.file.filename,
+            cloudinaryId: req.file.public_id || req.file.filename,
             fileUrl: req.file.path,
-            fileSize: req.file.bytes,
-            mimeType: req.file.mimetype
+            fileSize: req.file.size,
+            mimeType: req.file.mimetype,
+            fileExtension: fileExtension
         });
 
+        console.log('Attempting to save file:', newFile);
         await newFile.save();
-        res.status(201).json({ message: 'File uploaded successfully!', file: newFile });
+        console.log('File saved successfully');
+        
+        res.status(201).json({ 
+            message: 'File uploaded successfully!', 
+            file: {
+                ...newFile.toObject(),
+                fileType: getFileTypeIcon(fileExtension)
+            }
+        });
     } catch (error) {
-        console.error('Upload error:', error);
-        res.status(500).json({ message: 'File upload failed. Please try again.' });
+        console.error('Upload error details:', error);
+        console.error('Upload error stack:', error.stack);
+        
+        // If there was an error, try to clean up the uploaded file
+        if (req.file && (req.file.public_id || req.file.filename)) {
+            try {
+                const cloudinaryId = req.file.public_id || req.file.filename;
+                await cloudinary.uploader.destroy(cloudinaryId, { 
+                    resource_type: 'auto',
+                    invalidate: true 
+                });
+                console.log('Cleaned up uploaded file due to error');
+            } catch (deleteError) {
+                console.error('Failed to cleanup file after error:', deleteError);
+            }
+        }
+        
+        // Handle specific errors
+        if (error.code === 'INVALID_FILE_TYPE') {
+            return res.status(400).json({ 
+                message: error.message
+            });
+        }
+        
+        if (error.message && (error.message.includes('file format not allowed') || error.message.includes('An unknown file format'))) {
+            return res.status(400).json({ 
+                message: 'File format not supported. Please upload PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, or RTF files.',
+                error: process.env.NODE_ENV === 'development' ? error.message : undefined
+            });
+        }
+        
+        res.status(500).json({ 
+            message: 'File upload failed. Please try again.',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
+
+// Helper function to get file type icon
+function getFileTypeIcon(extension) {
+    const iconMap = {
+        '.pdf': 'fas fa-file-pdf',
+        '.doc': 'fas fa-file-word',
+        '.docx': 'fas fa-file-word',
+        '.xls': 'fas fa-file-excel',
+        '.xlsx': 'fas fa-file-excel',
+        '.ppt': 'fas fa-file-powerpoint',
+        '.pptx': 'fas fa-file-powerpoint',
+        '.txt': 'fas fa-file-alt',
+        '.rtf': 'fas fa-file-alt'
+    };
+    return iconMap[extension.toLowerCase()] || 'fas fa-file';
+}
 
 // Delete file
 app.delete('/api/files/:id', ensureDbConnection, authenticateToken, async (req, res) => {
@@ -338,7 +493,15 @@ app.delete('/api/files/:id', ensureDbConnection, authenticateToken, async (req, 
         }
         
         // Delete file from Cloudinary
-        await cloudinary.uploader.destroy(file.cloudinaryId, { resource_type: 'raw' });
+        try {
+            await cloudinary.uploader.destroy(file.cloudinaryId, { 
+                resource_type: 'auto',
+                invalidate: true 
+            });
+        } catch (cloudinaryError) {
+            console.error('Failed to delete from Cloudinary:', cloudinaryError);
+            // Continue with database deletion even if Cloudinary fails
+        }
         
         // Delete file record from database
         await File.findByIdAndDelete(fileId);

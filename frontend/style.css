@@ -1261,3 +1261,49 @@ body.dark-mode .close {
     transform: translateY(0) !important;
     transition: none !important;
 }
+
+/* File upload improvements */
+.file-info-text {
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
+.file-info-text small {
+    color: #666;
+    font-style: italic;
+}
+
+.file-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.file-header i {
+    font-size: 1.2rem;
+    min-width: 20px;
+}
+
+.file-size {
+    color: #888;
+    font-size: 0.8rem;
+    font-weight: normal;
+    margin-left: auto;
+}
+
+/* File type specific colors */
+.text-danger { color: #dc3545 !important; }
+.text-primary { color: #007bff !important; }
+.text-success { color: #28a745 !important; }
+.text-warning { color: #ffc107 !important; }
+.text-secondary { color: #6c757d !important; }
+.text-muted { color: #868e96 !important; }
+
+/* Dark mode support for file colors */
+body.dark-mode .text-danger { color: #ff6b6b !important; }
+body.dark-mode .text-primary { color: #74c0fc !important; }
+body.dark-mode .text-success { color: #51cf66 !important; }
+body.dark-mode .text-warning { color: #ffd43b !important; }
+body.dark-mode .text-secondary { color: #adb5bd !important; }
+body.dark-mode .text-muted { color: #868e96 !important; }

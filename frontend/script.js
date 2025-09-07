@@ -489,7 +489,10 @@ async function renderUnitContent(unitNumber) {
                 <form class="upload-form" id="uploadForm">
                     <input type="text" name="title" placeholder="File Title" required>
                     <textarea name="description" placeholder="Description" required></textarea>
-                    <input type="file" name="file" accept=".pdf,.doc,.docx,.xlsx,.pptx,.txt" required>
+                    <input type="file" name="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf" required>
+                    <div class="file-info-text">
+                        <small>Supported formats: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, or RTF (Max: 25MB)</small>
+                    </div>
                     <button type="submit">Upload</button>
                 </form>
             ` : isSyllabus ? 
@@ -538,21 +541,31 @@ async function renderUnitContent(unitNumber) {
             const filesHtml = unitFiles.map(file => {
                 const downloadPath = file.path.replace(/\\/g, '/');
                 const canDelete = token && isCurrentUserAdmin();
+                const fileIcon = getFileIcon(file.filename);
+                const fileSize = formatFileSize(file.fileSize);
                 
                 return `
                     <div class="file-item">
                         <div class="file-info">
-                            <h5>${file.title}</h5>
+                            <div class="file-header">
+                                <i class="${fileIcon}"></i>
+                                <h5>${file.title}</h5>
+                                ${fileSize ? `<span class="file-size">${fileSize}</span>` : ''}
+                            </div>
                             <p>Uploaded by: ${file.uploadedBy} | ${new Date(file.date).toLocaleDateString()}</p>
                             <p class="file-description">${file.description}</p>
                         </div>
                         <div class="file-actions">
                             ${token ? 
-                                `<a href="${API_URL}/download/${file.filename}" class="download-link">Download</a>` :
+                                `<a href="${API_URL}/download/${file.filename}" class="download-link">
+                                    <i class="fas fa-download"></i> Download
+                                </a>` :
                                 '<span class="login-required">Login to download</span>'
                             }
                             ${canDelete ? 
-                                `<button class="delete-file-btn" onclick="deleteFileFromUnit('${file.id}', '${file.title}')">Delete</button>` : 
+                                `<button class="delete-file-btn" onclick="deleteFileFromUnit('${file.id}', '${file.title}')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>` : 
                                 ''
                             }
                         </div>
@@ -572,6 +585,32 @@ async function renderUnitContent(unitNumber) {
     }
 }
 
+// Helper function to get file icon based on filename
+function getFileIcon(filename) {
+    const extension = filename.toLowerCase().slice(filename.lastIndexOf('.'));
+    const iconMap = {
+        '.pdf': 'fas fa-file-pdf text-danger',
+        '.doc': 'fas fa-file-word text-primary',
+        '.docx': 'fas fa-file-word text-primary',
+        '.xls': 'fas fa-file-excel text-success',
+        '.xlsx': 'fas fa-file-excel text-success',
+        '.ppt': 'fas fa-file-powerpoint text-warning',
+        '.pptx': 'fas fa-file-powerpoint text-warning',
+        '.txt': 'fas fa-file-alt text-secondary',
+        '.rtf': 'fas fa-file-alt text-secondary'
+    };
+    return iconMap[extension] || 'fas fa-file text-muted';
+}
+
+// Helper function to format file size
+function formatFileSize(bytes) {
+    if (!bytes) return '';
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    if (bytes === 0) return '0 Bytes';
+    const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+}
+
 // Handle file upload
 async function handleFileUpload(e, unitNumber) {
     e.preventDefault();
@@ -583,35 +622,92 @@ async function handleFileUpload(e, unitNumber) {
     
     const form = e.target;
     const formData = new FormData(form);
+    const fileInput = form.querySelector('input[type="file"]');
+    const file = fileInput.files[0];
 
-    // Add subject and unit information to FormData - ensure they're the correct types
+    // Validate file before upload
+    if (!file) {
+        showNotification('Please select a file to upload', 'error');
+        return;
+    }
+
+    console.log('Selected file:', {
+        name: file.name,
+        type: file.type,
+        size: file.size
+    });
+
+    // Check file size (25MB limit)
+    const maxSize = 25 * 1024 * 1024; // 25MB
+    if (file.size > maxSize) {
+        showNotification('File size too large. Maximum size is 25MB.', 'error');
+        return;
+    }
+
+    // Check file type - be more flexible with MIME types
+    const allowedExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.rtf'];
+    const fileExtension = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
+    
+    if (!allowedExtensions.includes(fileExtension)) {
+        showNotification('File type not supported. Please upload PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, or RTF files.', 'error');
+        return;
+    }
+
+    // Add subject and unit information to FormData
     formData.append('subjectId', parseInt(currentSubject.id));
     formData.append('unit', parseInt(unitNumber));
     
-    // Ensure the current user's email is sent for proper file association
-    formData.append('uploadedBy', currentUser.email);
+    // Debug logging
+    console.log('Upload form data:');
+    for (let [key, value] of formData.entries()) {
+        if (value instanceof File) {
+            console.log(key, `File: ${value.name} (${value.type}, ${value.size} bytes)`);
+        } else {
+            console.log(key, value);
+        }
+    }
     
-    console.log('Uploading file with subjectId:', currentSubject.id, 'and unit:', unitNumber); // Debug log
+    // Show upload progress
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Uploading...';
+    submitBtn.disabled = true;
     
     try {
+        console.log('Starting upload to:', `${API_URL}/files/upload`);
+        
         const response = await fetch(`${API_URL}/files/upload`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` },
             body: formData,
         });
 
-        const data = await response.json();
+        console.log('Upload response status:', response.status);
+        console.log('Upload response headers:', response.headers.get('content-type'));
+
+        let data;
+        try {
+            data = await response.json();
+        } catch (jsonError) {
+            console.error('Failed to parse response as JSON:', jsonError);
+            throw new Error(`Upload failed with status ${response.status}`);
+        }
 
         if (response.ok) {
             showNotification(data.message, 'success');
             renderUnitContent(unitNumber); // Refresh the unit content
             form.reset();
         } else {
+            console.error('Upload failed with data:', data);
             showNotification(data.message || 'File upload failed', 'error');
         }
     } catch (error) {
-        showNotification('File upload failed. Please try again.', 'error');
         console.error('File upload error:', error);
+        showNotification('File upload failed. Please try again.', 'error');
+    } finally {
+        // Reset button
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
     }
 }
 
