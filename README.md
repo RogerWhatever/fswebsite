@@ -26,7 +26,7 @@ A collaborative platform for BSC Computer Science students to share and access s
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/edushare-bsc-cs.git
+git clone https://github.com/RogerWhatever/fswebsite.git
 cd edushare-bsc-cs
 ```
 
