@@ -407,70 +407,34 @@ app.use((error, req, res, next) => {
     });
 });
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
-    console.log('Available endpoints:');
-    console.log('GET /api/health');
-    console.log('POST /api/register');
-    console.log('POST /api/login');
-    console.log('GET /api/files');
-    console.log('POST /api/files/upload');
-    console.log('DELETE /api/files/:id');
-    console.log('GET /api/download/:filename');
-});
-
-module.exports = app; // Export for Vercel
-// Test MongoDB connection endpoint
-app.get('/api/test-mongo', async (req, res) => {
-    try {
-        // Try to connect first
-        await connectToDatabase();
-        
-        // Test with a simple query instead of admin ping
-        const collections = await mongoose.connection.db.listCollections().toArray();
-        
-        res.json({ 
-            status: 'MongoDB connection successful',
-            readyState: mongoose.connection.readyState,
-            host: mongoose.connection.host,
-            name: mongoose.connection.name,
-            database: mongoose.connection.db.databaseName,
-            collections: collections.map(col => col.name),
-            models: {
-                User: !!User,
-                File: !!File
-            }
-        });
-    } catch (error) {
-        res.status(500).json({ 
-            status: 'MongoDB connection failed',
-            error: error.message,
-            readyState: mongoose.connection.readyState
-        });
-    }
-});
-
-// Error handling middleware
-app.use((error, req, res, next) => {
-    console.error('Unhandled error:', error);
-    res.status(500).json({ 
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+// Only start server if not in test mode or if this file is run directly
+if (require.main === module) {
+    const server = app.listen(PORT, () => {
+        console.log(`🚀 Server is running on port ${PORT}`);
+        console.log('Available endpoints:');
+        console.log('GET /api/health');
+        console.log('POST /api/register');
+        console.log('POST /api/login');
+        console.log('GET /api/files');
+        console.log('POST /api/files/upload');
+        console.log('DELETE /api/files/:id');
+        console.log('GET /api/download/:filename');
     });
-});
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
-    console.log('Available endpoints:');
-    console.log('GET /api/health');
-    console.log('POST /api/register');
-    console.log('POST /api/login');
-    console.log('GET /api/files');
-    console.log('POST /api/files/upload');
-    console.log('DELETE /api/files/:id');
-    console.log('GET /api/download/:filename');
-});
+    // Handle server shutdown gracefully
+    process.on('SIGTERM', () => {
+        console.log('SIGTERM received, shutting down gracefully');
+        server.close(() => {
+            console.log('Process terminated');
+        });
+    });
+
+    process.on('SIGINT', () => {
+        console.log('SIGINT received, shutting down gracefully');
+        server.close(() => {
+            console.log('Process terminated');
+        });
+    });
+}
 
 module.exports = app; // Export for Vercel
