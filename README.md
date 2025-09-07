@@ -62,10 +62,4 @@ Register with email: `admin@gmail.com` to get admin privileges:
 7. Human & Computer Interaction
 8. Basics of Nutraceuticals & Cosmeceuticals
 
-## Author
-
-**Rudra Ambike**
-
-## License
-
-MIT License
+SS
