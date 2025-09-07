@@ -31,14 +31,37 @@ app.use(cors());
 
 // Connect to MongoDB
 if (MONGODB_URI) {
+    console.log('Attempting to connect to MongoDB...');
     mongoose.connect(MONGODB_URI, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 30000, // 30 seconds
+        socketTimeoutMS: 45000, // 45 seconds
+        bufferCommands: false,
+        bufferMaxEntries: 0
     })
-    .then(() => console.log('✅ Connected to MongoDB Atlas'))
+    .then(() => {
+        console.log('✅ Connected to MongoDB Atlas');
+        console.log('Database name:', mongoose.connection.db.databaseName);
+    })
     .catch((error) => {
         console.error('❌ MongoDB connection error:', error);
+        console.error('MongoDB URI (redacted):', MONGODB_URI.replace(/\/\/.*:.*@/, '//***:***@'));
         console.error('Make sure your MongoDB URI is correct and your IP is whitelisted');
+        console.error('Error details:', error.message);
+    });
+
+    // Handle connection events
+    mongoose.connection.on('connected', () => {
+        console.log('Mongoose connected to MongoDB');
+    });
+
+    mongoose.connection.on('error', (err) => {
+        console.error('Mongoose connection error:', err);
+    });
+
+    mongoose.connection.on('disconnected', () => {
+        console.log('Mongoose disconnected from MongoDB');
     });
 } else {
     console.error('❌ MONGODB_URI environment variable is not set');
@@ -108,7 +131,14 @@ app.get('/api/health', (req, res) => {
             cloudinary: !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET),
             jwt: !!JWT_SECRET
         },
-        mongoConnection: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+        mongoConnection: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
+        mongoState: {
+            0: 'Disconnected',
+            1: 'Connected',
+            2: 'Connecting',
+            3: 'Disconnecting'
+        }[mongoose.connection.readyState],
+        mongoDatabase: mongoose.connection.db ? mongoose.connection.db.databaseName : 'Not connected'
     };
     res.json(healthStatus);
 });
@@ -304,6 +334,26 @@ app.get('/api/download/:filename', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Download error:', error);
         res.status(500).json({ message: 'Download failed.' });
+    }
+});
+
+// Test MongoDB connection endpoint
+app.get('/api/test-mongo', async (req, res) => {
+    try {
+        // Try to ping the database
+        await mongoose.connection.db.admin().ping();
+        res.json({ 
+            status: 'MongoDB connection successful',
+            readyState: mongoose.connection.readyState,
+            host: mongoose.connection.host,
+            name: mongoose.connection.name
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            status: 'MongoDB connection failed',
+            error: error.message,
+            readyState: mongoose.connection.readyState
+        });
     }
 });
 
