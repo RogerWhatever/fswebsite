@@ -543,6 +543,8 @@ async function renderUnitContent(unitNumber) {
                 const canDelete = token && isCurrentUserAdmin();
                 const fileIcon = getFileIcon(file.filename);
                 const fileSize = formatFileSize(file.fileSize);
+                // Encode filename for URL
+                const encodedFilename = encodeURIComponent(file.filename);
                 
                 return `
                     <div class="file-item">
@@ -557,7 +559,7 @@ async function renderUnitContent(unitNumber) {
                         </div>
                         <div class="file-actions">
                             ${token ? 
-                                `<a href="${API_URL}/download/${file.filename}" class="download-link">
+                                `<a href="${API_URL}/download/${encodedFilename}" class="download-link" target="_blank">
                                     <i class="fas fa-download"></i> Download
                                 </a>` :
                                 '<span class="login-required">Login to download</span>'
@@ -829,6 +831,8 @@ function renderUserUploads(uploads) {
         const downloadPath = upload.path.replace(/\\/g, '/');
         const unitDisplay = upload.unit === 0 ? 'Syllabus' : `Unit ${upload.unit}`;
         const canDelete = isCurrentUserAdmin() || upload.uploadedBy === currentUser.email;
+        // Encode filename for URL
+        const encodedFilename = encodeURIComponent(upload.filename);
         
         return `
             <div class="upload-item">
@@ -846,7 +850,7 @@ function renderUserUploads(uploads) {
                 </div>
                 <div class="upload-description">${upload.description}</div>
                 <div class="upload-actions">
-                    <a href="${API_URL}/download/${upload.filename}" class="action-btn download-btn">
+                    <a href="${API_URL}/download/${encodedFilename}" class="action-btn download-btn" target="_blank">
                         <i class="fas fa-download"></i> Download
                     </a>
                     ${canDelete ? `

@@ -513,18 +513,47 @@ app.delete('/api/files/:id', ensureDbConnection, authenticateToken, async (req, 
     }
 });
 
-// Download endpoint (redirect to Cloudinary URL)
-app.get('/api/download/:filename', ensureDbConnection, authenticateToken, async (req, res) => {
+// Download endpoint - Force download with original filename
+app.get('/api/download/:filename', ensureDbConnection, async (req, res) => {
     try {
-        const filename = req.params.filename;
+        const filename = decodeURIComponent(req.params.filename);
+        console.log('Download request for filename:', filename);
+        
         const file = await File.findOne({ filename });
         
         if (!file) {
+            console.log('File not found in database:', filename);
             return res.status(404).json({ message: 'File not found.' });
         }
         
-        // Redirect to Cloudinary URL for download
-        res.redirect(file.fileUrl);
+        console.log('File found, downloading from:', file.fileUrl);
+        
+        try {
+            // Fetch the file from Cloudinary
+            const response = await fetch(file.fileUrl);
+            
+            if (!response.ok) {
+                console.error('Failed to fetch file from Cloudinary:', response.status);
+                return res.status(404).json({ message: 'File not available.' });
+            }
+            
+            // Get the file buffer
+            const fileBuffer = await response.arrayBuffer();
+            
+            // Set proper headers for download
+            res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.filename)}"`);
+            res.setHeader('Content-Type', file.mimeType || 'application/octet-stream');
+            res.setHeader('Content-Length', fileBuffer.byteLength);
+            res.setHeader('Cache-Control', 'no-cache');
+            
+            // Send the file
+            res.send(Buffer.from(fileBuffer));
+            
+        } catch (fetchError) {
+            console.error('Error fetching file from Cloudinary:', fetchError);
+            return res.status(500).json({ message: 'Failed to download file.' });
+        }
+        
     } catch (error) {
         console.error('Download error:', error);
         res.status(500).json({ message: 'Download failed.' });
