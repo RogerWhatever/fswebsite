@@ -772,13 +772,13 @@ body.dark-mode .uploads-loading {
     color: var(--text-color);
 }
 
-/* About Section - Force visibility */
+/* About Section - Always visible */
 .about {
     max-width: 1200px;
     margin: 50px auto;
     padding: 0 25px;
-    opacity: 1; /* Force visibility */
-    transform: none; /* Ensure no transform issues */
+    opacity: 1 !important;
+    transform: translateY(0) !important;
 }
 
 .about h2 {
@@ -804,10 +804,6 @@ body.dark-mode .uploads-loading {
     line-height: 1.8;
     margin-bottom: 30px;
     color: #666;
-}
-
-body.dark-mode .about-text p {
-    color: #ccc;
 }
 
 .about-text ul {
@@ -843,13 +839,13 @@ body.dark-mode .about-text p {
     display: block;
 }
 
-/* Contact Section - Force visibility */
+/* Contact Section - Always visible */
 .contact {
     max-width: 1200px;
     margin: 50px auto;
     padding: 0 25px;
-    opacity: 1; /* Force visibility */
-    transform: none; /* Ensure no transform issues */
+    opacity: 1 !important;
+    transform: translateY(0) !important;
 }
 
 .contact h2 {
@@ -973,6 +969,114 @@ body.dark-mode .contact-form input:focus,
 body.dark-mode .contact-form textarea:focus {
     border-color: var(--accent-teal) !important;
     box-shadow: 0 0 0 3px rgba(6, 214, 160, 0.2) !important;
+}
+
+/* Footer */
+.footer {
+    background-color: var(--dark-grey);
+    color: #fff;
+    padding: 50px 0 20px;
+    margin-top: 80px;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 25px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 40px;
+}
+
+.footer-section h3 {
+    color: #fff;
+    margin-bottom: 20px;
+    font-size: 1.3rem;
+}
+
+.footer-section p {
+    color: #ccc;
+    line-height: 1.6;
+}
+
+.footer-section ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-section ul li {
+    margin-bottom: 10px;
+}
+
+.footer-section ul li a {
+    color: #ccc;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.footer-section ul li a:hover {
+    color: var(--accent-teal);
+}
+
+.social-icons {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.social-icons a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: var(--accent-teal);
+    color: #fff;
+    border-radius: 50%;
+    text-decoration: none;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.social-icons a:hover {
+    background-color: #05b487;
+    transform: translateY(-2px);
+}
+
+.footer-bottom {
+    border-top: 1px solid #555;
+    margin-top: 40px;
+    padding-top: 20px;
+    text-align: center;
+}
+
+.footer-bottom p {
+    color: #ccc;
+    margin: 0;
+}
+
+/* Dark mode support for footer */
+body.dark-mode .footer {
+    background-color: #0a0a0a;
+}
+
+body.dark-mode .footer-section h3 {
+    color: #fff;
+}
+
+body.dark-mode .footer-section p {
+    color: #ccc;
+}
+
+body.dark-mode .footer-section ul li a {
+    color: #ccc;
+}
+
+body.dark-mode .footer-section ul li a:hover {
+    color: var(--accent-teal);
+}
+
+body.dark-mode .footer-bottom p {
+    color: #ccc;
 }
 
 /* Responsive Design */
@@ -1119,19 +1223,30 @@ body.dark-mode .hamburger .bar {
 body.dark-mode .close {
     color: #e0e0e0;
 }
+
 /* Add this new CSS rule for the logout button */
 .logout-btn {
     background-color: transparent;
-    border: 2px solid var(--primary-color);
-    color: var(--primary-color);
-    padding: 8px 16px;
-    border-radius: 5px;
+    border: 2px solid var(--primary-blue);
+    color: var(--primary-blue);
+    padding: 10px 24px;
+    border-radius: 50px;
     font-weight: 600;
-    transition: background-color 0.3s, color 0.3s;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 .logout-btn:hover {
-    background-color: var(--primary-color);
-    color: var(--bg-color);
-    cursor: pointer;
+    background-color: var(--primary-blue);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Remove any transition for these sections to prevent flickering */
+.about,
+.contact {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    transition: none !important;
 }
