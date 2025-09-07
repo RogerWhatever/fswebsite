@@ -8,10 +8,6 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 require('dotenv').config();
 
-// Import models
-const User = require('./models/User');
-const File = require('./models/File');
-
 // --- Configuration ---
 const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key_change_in_production';
 const PORT = process.env.PORT || 3000;
@@ -29,46 +25,57 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Global connection variable for reuse in serverless
-let cachedConnection = null;
+// Simpler MongoDB connection for Vercel
+let isConnected = false;
 
-// Enhanced MongoDB connection function for Vercel
 async function connectToDatabase() {
-    if (cachedConnection && mongoose.connection.readyState === 1) {
-        console.log('Using cached MongoDB connection');
-        return cachedConnection;
+    if (isConnected && mongoose.connection.readyState === 1) {
+        console.log('Using existing MongoDB connection');
+        return mongoose.connection;
     }
 
     try {
         console.log('Creating new MongoDB connection...');
         
-        const connection = await mongoose.connect(MONGODB_URI, {
+        await mongoose.connect(MONGODB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 10000, // Reduced to 10 seconds for Vercel
-            socketTimeoutMS: 15000, // Reduced timeout
-            maxPoolSize: 10, // Maintain up to 10 socket connections
-            serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
-            heartbeatFrequencyMS: 10000, // Every 10 seconds
-            bufferCommands: false, // Disable mongoose buffering
-            bufferMaxEntries: 0 // Disable mongoose buffering
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
         });
 
-        cachedConnection = connection;
+        isConnected = true;
         console.log('✅ Connected to MongoDB Atlas');
-        return connection;
+        return mongoose.connection;
     } catch (error) {
         console.error('❌ MongoDB connection error:', error.message);
+        isConnected = false;
         throw error;
     }
 }
 
-// Initialize connection only if URI is provided
-if (MONGODB_URI) {
-    connectToDatabase().catch(console.error);
-} else {
-    console.error('❌ MONGODB_URI environment variable is not set');
+// Import models after connection setup
+let User, File;
+
+// Initialize models and connection
+async function initializeApp() {
+    if (MONGODB_URI) {
+        try {
+            await connectToDatabase();
+            // Import models only after connection is established
+            User = require('./models/User');
+            File = require('./models/File');
+            console.log('✅ Models loaded successfully');
+        } catch (error) {
+            console.error('❌ Failed to initialize database:', error);
+        }
+    } else {
+        console.error('❌ MONGODB_URI environment variable is not set');
+    }
 }
+
+// Initialize on startup
+initializeApp();
 
 // Configure Cloudinary
 if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
@@ -102,9 +109,14 @@ const upload = multer({
 // Middleware to ensure database connection for each request
 async function ensureDbConnection(req, res, next) {
     try {
-        if (mongoose.connection.readyState !== 1) {
+        if (!isConnected || mongoose.connection.readyState !== 1) {
             console.log('Database not connected, attempting to reconnect...');
             await connectToDatabase();
+            // Reload models if needed
+            if (!User || !File) {
+                User = require('./models/User');
+                File = require('./models/File');
+            }
         }
         next();
     } catch (error) {
@@ -144,9 +156,12 @@ const isAdmin = (email) => {
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
     try {
-        // Try to connect to database if not connected
-        if (mongoose.connection.readyState !== 1) {
-            await connectToDatabase();
+        let mongoStatus = 'Disconnected';
+        let mongoDatabase = 'Not connected';
+        
+        if (mongoose.connection.readyState === 1) {
+            mongoStatus = 'Connected';
+            mongoDatabase = mongoose.connection.db?.databaseName || 'Connected but no DB name';
         }
         
         const healthStatus = {
@@ -157,15 +172,20 @@ app.get('/api/health', async (req, res) => {
                 cloudinary: !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET),
                 jwt: !!JWT_SECRET
             },
-            mongoConnection: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
+            mongoConnection: mongoStatus,
             mongoState: {
                 0: 'Disconnected',
                 1: 'Connected',
                 2: 'Connecting',
                 3: 'Disconnecting'
-            }[mongoose.connection.readyState],
-            mongoDatabase: mongoose.connection.db ? mongoose.connection.db.databaseName : 'Not connected',
-            mongoURI: MONGODB_URI ? MONGODB_URI.replace(/\/\/.*:.*@/, '//***:***@') : 'Not set'
+            }[mongoose.connection.readyState] || 'Unknown',
+            mongoDatabase: mongoDatabase,
+            mongoURI: MONGODB_URI ? MONGODB_URI.replace(/\/\/.*:.*@/, '//***:***@') : 'Not set',
+            isConnected: isConnected,
+            models: {
+                User: !!User,
+                File: !!File
+            }
         };
         res.json(healthStatus);
     } catch (error) {
@@ -360,14 +380,20 @@ app.get('/api/download/:filename', ensureDbConnection, authenticateToken, async 
 // Test MongoDB connection endpoint
 app.get('/api/test-mongo', async (req, res) => {
     try {
+        // Try to connect first
         await connectToDatabase();
-        await mongoose.connection.db.admin().ping();
+        
+        // Test with a simple operation
+        const adminDb = mongoose.connection.db.admin();
+        const result = await adminDb.ping();
+        
         res.json({ 
             status: 'MongoDB connection successful',
             readyState: mongoose.connection.readyState,
             host: mongoose.connection.host,
             name: mongoose.connection.name,
-            database: mongoose.connection.db.databaseName
+            database: mongoose.connection.db.databaseName,
+            ping: result
         });
     } catch (error) {
         res.status(500).json({ 
@@ -399,3 +425,5 @@ app.listen(PORT, () => {
     console.log('DELETE /api/files/:id');
     console.log('GET /api/download/:filename');
 });
+
+module.exports = app; // Export for Vercel
