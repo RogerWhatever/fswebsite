@@ -25,7 +25,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Simpler MongoDB connection for Vercel
+// Simple MongoDB connection for Vercel
 let isConnected = false;
 
 async function connectToDatabase() {
@@ -37,11 +37,10 @@ async function connectToDatabase() {
     try {
         console.log('Creating new MongoDB connection...');
         
+        // Simple connection options that work with all MongoDB versions
         await mongoose.connect(MONGODB_URI, {
             useNewUrlParser: true,
-            useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 5000,
-            socketTimeoutMS: 45000,
+            useUnifiedTopology: true
         });
 
         isConnected = true;
@@ -158,6 +157,15 @@ app.get('/api/health', async (req, res) => {
     try {
         let mongoStatus = 'Disconnected';
         let mongoDatabase = 'Not connected';
+        
+        // Try to connect if not connected
+        if (!isConnected || mongoose.connection.readyState !== 1) {
+            try {
+                await connectToDatabase();
+            } catch (connectError) {
+                console.error('Failed to connect during health check:', connectError);
+            }
+        }
         
         if (mongoose.connection.readyState === 1) {
             mongoStatus = 'Connected';
@@ -383,9 +391,8 @@ app.get('/api/test-mongo', async (req, res) => {
         // Try to connect first
         await connectToDatabase();
         
-        // Test with a simple operation
-        const adminDb = mongoose.connection.db.admin();
-        const result = await adminDb.ping();
+        // Test with a simple query instead of admin ping
+        const collections = await mongoose.connection.db.listCollections().toArray();
         
         res.json({ 
             status: 'MongoDB connection successful',
@@ -393,7 +400,7 @@ app.get('/api/test-mongo', async (req, res) => {
             host: mongoose.connection.host,
             name: mongoose.connection.name,
             database: mongoose.connection.db.databaseName,
-            ping: result
+            collections: collections.map(col => col.name)
         });
     } catch (error) {
         res.status(500).json({ 
