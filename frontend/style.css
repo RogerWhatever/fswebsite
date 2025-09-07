@@ -973,110 +973,121 @@ body.dark-mode .contact-form textarea:focus {
 
 /* Footer */
 .footer {
-    background-color: var(--dark-grey);
-    color: #fff;
-    padding: 50px 0 20px;
-    margin-top: 80px;
+    background-color: var(--dark-grey) !important;
+    color: #fff !important;
+    padding: 50px 0 20px !important;
+    margin-top: 80px !important;
+    display: block !important;
+    visibility: visible !important;
 }
 
 .footer-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 25px;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 40px;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+    padding: 0 25px !important;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+    gap: 40px !important;
+}
+
+.footer-section {
+    display: block !important;
+    visibility: visible !important;
 }
 
 .footer-section h3 {
-    color: #fff;
-    margin-bottom: 20px;
-    font-size: 1.3rem;
+    color: #fff !important;
+    margin-bottom: 20px !important;
+    font-size: 1.3rem !important;
+    display: block !important;
 }
 
 .footer-section p {
-    color: #ccc;
-    line-height: 1.6;
+    color: #ccc !important;
+    line-height: 1.6 !important;
+    display: block !important;
 }
 
 .footer-section ul {
-    list-style: none;
-    padding: 0;
+    list-style: none !important;
+    padding: 0 !important;
+    display: block !important;
 }
 
 .footer-section ul li {
-    margin-bottom: 10px;
+    margin-bottom: 10px !important;
+    display: block !important;
 }
 
 .footer-section ul li a {
-    color: #ccc;
-    text-decoration: none;
-    transition: color 0.3s;
+    color: #ccc !important;
+    text-decoration: none !important;
+    transition: color 0.3s !important;
 }
 
 .footer-section ul li a:hover {
-    color: var(--accent-teal);
+    color: var(--accent-teal) !important;
 }
 
 .social-icons {
-    display: flex;
-    gap: 15px;
-    margin-top: 20px;
+    display: flex !important;
+    gap: 15px !important;
+    margin-top: 20px !important;
 }
 
 .social-icons a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    background-color: var(--accent-teal);
-    color: #fff;
-    border-radius: 50%;
-    text-decoration: none;
-    transition: background-color 0.3s, transform 0.3s;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 40px !important;
+    height: 40px !important;
+    background-color: var(--accent-teal) !important;
+    color: #fff !important;
+    border-radius: 50% !important;
+    text-decoration: none !important;
+    transition: background-color 0.3s, transform 0.3s !important;
 }
 
 .social-icons a:hover {
-    background-color: #05b487;
-    transform: translateY(-2px);
+    background-color: #05b487 !important;
+    transform: translateY(-2px) !important;
 }
 
 .footer-bottom {
-    border-top: 1px solid #555;
-    margin-top: 40px;
-    padding-top: 20px;
-    text-align: center;
+    border-top: 1px solid #555 !important;
+    margin-top: 40px !important;
+    padding-top: 20px !important;
+    text-align: center !important;
+    display: block !important;
 }
 
 .footer-bottom p {
-    color: #ccc;
-    margin: 0;
+    color: #ccc !important;
+    margin: 0 !important;
+    display: block !important;
 }
 
-/* Dark mode support for footer */
-body.dark-mode .footer {
-    background-color: #0a0a0a;
+/* About and Contact - Force visibility with higher specificity */
+section.about,
+section.contact {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    transition: none !important;
+    display: block !important;
+    visibility: visible !important;
 }
 
-body.dark-mode .footer-section h3 {
-    color: #fff;
+.about-content,
+.contact-content {
+    display: flex !important;
+    visibility: visible !important;
 }
 
-body.dark-mode .footer-section p {
-    color: #ccc;
-}
-
-body.dark-mode .footer-section ul li a {
-    color: #ccc;
-}
-
-body.dark-mode .footer-section ul li a:hover {
-    color: var(--accent-teal);
-}
-
-body.dark-mode .footer-bottom p {
-    color: #ccc;
+.about-text,
+.contact-info,
+.contact-form {
+    display: block !important;
+    visibility: visible !important;
 }
 
 /* Responsive Design */
