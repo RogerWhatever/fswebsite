@@ -29,40 +29,43 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Connect to MongoDB
-if (MONGODB_URI) {
-    console.log('Attempting to connect to MongoDB...');
-    mongoose.connect(MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        serverSelectionTimeoutMS: 30000, // 30 seconds
-        socketTimeoutMS: 45000, // 45 seconds
-        bufferCommands: false,
-        bufferMaxEntries: 0
-    })
-    .then(() => {
+// Global connection variable for reuse in serverless
+let cachedConnection = null;
+
+// Enhanced MongoDB connection function for Vercel
+async function connectToDatabase() {
+    if (cachedConnection && mongoose.connection.readyState === 1) {
+        console.log('Using cached MongoDB connection');
+        return cachedConnection;
+    }
+
+    try {
+        console.log('Creating new MongoDB connection...');
+        
+        const connection = await mongoose.connect(MONGODB_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 10000, // Reduced to 10 seconds for Vercel
+            socketTimeoutMS: 15000, // Reduced timeout
+            maxPoolSize: 10, // Maintain up to 10 socket connections
+            serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+            heartbeatFrequencyMS: 10000, // Every 10 seconds
+            bufferCommands: false, // Disable mongoose buffering
+            bufferMaxEntries: 0 // Disable mongoose buffering
+        });
+
+        cachedConnection = connection;
         console.log('✅ Connected to MongoDB Atlas');
-        console.log('Database name:', mongoose.connection.db.databaseName);
-    })
-    .catch((error) => {
-        console.error('❌ MongoDB connection error:', error);
-        console.error('MongoDB URI (redacted):', MONGODB_URI.replace(/\/\/.*:.*@/, '//***:***@'));
-        console.error('Make sure your MongoDB URI is correct and your IP is whitelisted');
-        console.error('Error details:', error.message);
-    });
+        return connection;
+    } catch (error) {
+        console.error('❌ MongoDB connection error:', error.message);
+        throw error;
+    }
+}
 
-    // Handle connection events
-    mongoose.connection.on('connected', () => {
-        console.log('Mongoose connected to MongoDB');
-    });
-
-    mongoose.connection.on('error', (err) => {
-        console.error('Mongoose connection error:', err);
-    });
-
-    mongoose.connection.on('disconnected', () => {
-        console.log('Mongoose disconnected from MongoDB');
-    });
+// Initialize connection only if URI is provided
+if (MONGODB_URI) {
+    connectToDatabase().catch(console.error);
 } else {
     console.error('❌ MONGODB_URI environment variable is not set');
 }
@@ -96,6 +99,23 @@ const upload = multer({
     }
 });
 
+// Middleware to ensure database connection for each request
+async function ensureDbConnection(req, res, next) {
+    try {
+        if (mongoose.connection.readyState !== 1) {
+            console.log('Database not connected, attempting to reconnect...');
+            await connectToDatabase();
+        }
+        next();
+    } catch (error) {
+        console.error('Database connection failed:', error);
+        return res.status(500).json({ 
+            message: 'Database connection error. Please try again later.',
+            error: error.message 
+        });
+    }
+}
+
 // --- Middleware for JWT Authentication ---
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -122,37 +142,45 @@ const isAdmin = (email) => {
 // --- API Endpoints ---
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-    const healthStatus = {
-        status: 'OK',
-        timestamp: new Date().toISOString(),
-        environment: {
-            mongodb: !!MONGODB_URI,
-            cloudinary: !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET),
-            jwt: !!JWT_SECRET
-        },
-        mongoConnection: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
-        mongoState: {
-            0: 'Disconnected',
-            1: 'Connected',
-            2: 'Connecting',
-            3: 'Disconnecting'
-        }[mongoose.connection.readyState],
-        mongoDatabase: mongoose.connection.db ? mongoose.connection.db.databaseName : 'Not connected'
-    };
-    res.json(healthStatus);
+app.get('/api/health', async (req, res) => {
+    try {
+        // Try to connect to database if not connected
+        if (mongoose.connection.readyState !== 1) {
+            await connectToDatabase();
+        }
+        
+        const healthStatus = {
+            status: 'OK',
+            timestamp: new Date().toISOString(),
+            environment: {
+                mongodb: !!MONGODB_URI,
+                cloudinary: !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET),
+                jwt: !!JWT_SECRET
+            },
+            mongoConnection: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected',
+            mongoState: {
+                0: 'Disconnected',
+                1: 'Connected',
+                2: 'Connecting',
+                3: 'Disconnecting'
+            }[mongoose.connection.readyState],
+            mongoDatabase: mongoose.connection.db ? mongoose.connection.db.databaseName : 'Not connected',
+            mongoURI: MONGODB_URI ? MONGODB_URI.replace(/\/\/.*:.*@/, '//***:***@') : 'Not set'
+        };
+        res.json(healthStatus);
+    } catch (error) {
+        res.status(500).json({
+            status: 'Error',
+            error: error.message,
+            mongoConnection: 'Failed'
+        });
+    }
 });
 
 // User Registration
-app.post('/api/register', async (req, res) => {
+app.post('/api/register', ensureDbConnection, async (req, res) => {
     try {
         console.log('Registration attempt:', req.body?.email);
-
-        // Check if MongoDB is connected
-        if (mongoose.connection.readyState !== 1) {
-            console.error('MongoDB not connected');
-            return res.status(500).json({ message: 'Database connection error. Please try again later.' });
-        }
 
         const { name, email, password } = req.body;
 
@@ -178,7 +206,6 @@ app.post('/api/register', async (req, res) => {
         res.status(201).json({ message });
     } catch (error) {
         console.error('Registration error:', error);
-        console.error('Error stack:', error.stack);
         res.status(500).json({ 
             message: 'Registration failed. Please try again.',
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -187,15 +214,9 @@ app.post('/api/register', async (req, res) => {
 });
 
 // User Login
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', ensureDbConnection, async (req, res) => {
     try {
         console.log('Login attempt:', req.body?.email);
-
-        // Check if MongoDB is connected
-        if (mongoose.connection.readyState !== 1) {
-            console.error('MongoDB not connected');
-            return res.status(500).json({ message: 'Database connection error. Please try again later.' });
-        }
 
         const { email, password } = req.body;
 
@@ -219,7 +240,6 @@ app.post('/api/login', async (req, res) => {
         });
     } catch (error) {
         console.error('Login error:', error);
-        console.error('Error stack:', error.stack);
         res.status(500).json({ 
             message: 'Login failed. Please try again.',
             error: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -228,7 +248,7 @@ app.post('/api/login', async (req, res) => {
 });
 
 // Get all files
-app.get('/api/files', async (req, res) => {
+app.get('/api/files', ensureDbConnection, async (req, res) => {
     try {
         const files = await File.find().sort({ createdAt: -1 });
         
@@ -253,7 +273,7 @@ app.get('/api/files', async (req, res) => {
 });
 
 // File Upload
-app.post('/api/files/upload', authenticateToken, upload.single('file'), async (req, res) => {
+app.post('/api/files/upload', ensureDbConnection, authenticateToken, upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ message: 'No file uploaded.' });
@@ -290,7 +310,7 @@ app.post('/api/files/upload', authenticateToken, upload.single('file'), async (r
 });
 
 // Delete file
-app.delete('/api/files/:id', authenticateToken, async (req, res) => {
+app.delete('/api/files/:id', ensureDbConnection, authenticateToken, async (req, res) => {
     try {
         const fileId = req.params.id;
         
@@ -320,7 +340,7 @@ app.delete('/api/files/:id', authenticateToken, async (req, res) => {
 });
 
 // Download endpoint (redirect to Cloudinary URL)
-app.get('/api/download/:filename', authenticateToken, async (req, res) => {
+app.get('/api/download/:filename', ensureDbConnection, authenticateToken, async (req, res) => {
     try {
         const filename = req.params.filename;
         const file = await File.findOne({ filename });
@@ -340,13 +360,14 @@ app.get('/api/download/:filename', authenticateToken, async (req, res) => {
 // Test MongoDB connection endpoint
 app.get('/api/test-mongo', async (req, res) => {
     try {
-        // Try to ping the database
+        await connectToDatabase();
         await mongoose.connection.db.admin().ping();
         res.json({ 
             status: 'MongoDB connection successful',
             readyState: mongoose.connection.readyState,
             host: mongoose.connection.host,
-            name: mongoose.connection.name
+            name: mongoose.connection.name,
+            database: mongoose.connection.db.databaseName
         });
     } catch (error) {
         res.status(500).json({ 
