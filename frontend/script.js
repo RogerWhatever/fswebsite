@@ -258,20 +258,26 @@ function setupIntersectionObserver() {
     const observerOptions = {
         root: null,
         rootMargin: '0px',
-        threshold: 0.2
+        threshold: 0.1 // Lower threshold for better triggering
     };
 
     const observer = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('is-visible');
-                observer.unobserve(entry.target);
+                // Don't unobserve in case of re-entry
             }
         });
     }, observerOptions);
 
     sections.forEach(section => {
         observer.observe(section);
+        // Force visibility for about and contact sections in case observer fails
+        if (section.id === 'about' || section.id === 'contact') {
+            setTimeout(() => {
+                section.classList.add('is-visible');
+            }, 100);
+        }
     });
 }
 
@@ -866,19 +872,6 @@ function loadUserPreferences() {
 }
 
 // Toggle dark mode and save preference
-function toggleDarkMode() {
-    const isDarkMode = document.body.classList.toggle('dark-mode');
-    localStorage.setItem('darkMode', isDarkMode);
-    
-    if (isDarkMode) {
-        darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-    } else {
-        darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-    }
-}
-
-// Initialize the app when DOM is loaded
-document.addEventListener('DOMContentLoaded', init);
 function toggleDarkMode() {
     const isDarkMode = document.body.classList.toggle('dark-mode');
     localStorage.setItem('darkMode', isDarkMode);
