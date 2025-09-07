@@ -2,6 +2,8 @@
 
 A collaborative platform for BSC Computer Science students to share and access study materials.
 
+🌐 **Live Website**: https://fswebsite-rho.vercel.app
+
 ## Features
 
 ✅ **User Authentication** - Register/Login system  
