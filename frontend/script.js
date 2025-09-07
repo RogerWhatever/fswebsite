@@ -314,11 +314,40 @@ async function handleLogin(e) {
 // Handle register form submission
 async function handleRegister(e) {
     e.preventDefault();
-    const name = document.getElementById('registerName').value;
-    const email = document.getElementById('registerEmail').value;
+    const name = document.getElementById('registerName').value.trim();
+    const email = document.getElementById('registerEmail').value.trim();
     const password = document.getElementById('registerPassword').value;
     const confirmPassword = document.getElementById('registerConfirmPassword').value;
     
+    // Client-side validation
+    if (name.length < 2) {
+        showNotification('Name must be at least 2 characters long', 'error');
+        return;
+    }
+
+    if (name.length > 50) {
+        showNotification('Name must be less than 50 characters long', 'error');
+        return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showNotification('Please enter a valid email address', 'error');
+        return;
+    }
+
+    // Password validation
+    if (password.length < 6) {
+        showNotification('Password must be at least 6 characters long', 'error');
+        return;
+    }
+
+    if (password.length > 128) {
+        showNotification('Password must be less than 128 characters long', 'error');
+        return;
+    }
+
     if (password !== confirmPassword) {
         showNotification('Passwords do not match', 'error');
         return;

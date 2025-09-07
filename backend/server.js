@@ -243,6 +243,30 @@ app.post('/api/register', ensureDbConnection, async (req, res) => {
             return res.status(400).json({ message: 'All fields are required.' });
         }
 
+        // Validate name length
+        if (name.trim().length < 2) {
+            return res.status(400).json({ message: 'Name must be at least 2 characters long.' });
+        }
+
+        if (name.trim().length > 50) {
+            return res.status(400).json({ message: 'Name must be less than 50 characters long.' });
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ message: 'Please enter a valid email address.' });
+        }
+
+        // Validate password length and strength
+        if (password.length < 6) {
+            return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
+        }
+
+        if (password.length > 128) {
+            return res.status(400).json({ message: 'Password must be less than 128 characters long.' });
+        }
+
         // Check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
@@ -250,7 +274,7 @@ app.post('/api/register', ensureDbConnection, async (req, res) => {
         }
 
         // Create new user
-        const user = new User({ name, email, password });
+        const user = new User({ name: name.trim(), email: email.toLowerCase().trim(), password });
         await user.save();
 
         const message = email === 'admin@gmail.com' ? 

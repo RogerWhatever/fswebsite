@@ -354,6 +354,51 @@ section {
     box-shadow: 0 0 0 3px rgba(58, 134, 255, 0.2);
 }
 
+.form-help {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.8rem;
+    color: #666;
+    font-style: italic;
+}
+
+.form-group input:focus + .form-help {
+    color: var(--primary-blue);
+}
+
+.form-group input:invalid {
+    border-color: #dc3545;
+}
+
+.form-group input:invalid + .form-help {
+    color: #dc3545;
+}
+
+.form-group input:valid {
+    border-color: #28a745;
+}
+
+.form-group input:valid + .form-help {
+    color: #28a745;
+}
+
+/* Dark mode support for form help text */
+body.dark-mode .form-help {
+    color: #aaa;
+}
+
+body.dark-mode .form-group input:focus + .form-help {
+    color: var(--accent-teal);
+}
+
+body.dark-mode .form-group input:invalid + .form-help {
+    color: #ff6b6b;
+}
+
+body.dark-mode .form-group input:valid + .form-help {
+    color: #51cf66;
+}
+
 .form-btn {
     width: 100%;
     padding: 15px;
