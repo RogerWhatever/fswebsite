@@ -17,25 +17,44 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key_change_i
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI;
 
+console.log('Environment check:');
+console.log('JWT_SECRET:', JWT_SECRET ? 'Set' : 'Not set');
+console.log('MONGODB_URI:', MONGODB_URI ? 'Set' : 'Not set');
+console.log('CLOUDINARY_CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME ? 'Set' : 'Not set');
+console.log('CLOUDINARY_API_KEY:', process.env.CLOUDINARY_API_KEY ? 'Set' : 'Not set');
+console.log('CLOUDINARY_API_SECRET:', process.env.CLOUDINARY_API_SECRET ? 'Set' : 'Not set');
+
 // --- Setup ---
 const app = express();
 app.use(express.json());
 app.use(cors());
 
 // Connect to MongoDB
-mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
-.then(() => console.log('Connected to MongoDB Atlas'))
-.catch((error) => console.error('MongoDB connection error:', error));
+if (MONGODB_URI) {
+    mongoose.connect(MONGODB_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    })
+    .then(() => console.log('✅ Connected to MongoDB Atlas'))
+    .catch((error) => {
+        console.error('❌ MongoDB connection error:', error);
+        console.error('Make sure your MongoDB URI is correct and your IP is whitelisted');
+    });
+} else {
+    console.error('❌ MONGODB_URI environment variable is not set');
+}
 
 // Configure Cloudinary
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+    cloudinary.config({
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+    console.log('✅ Cloudinary configured');
+} else {
+    console.error('❌ Cloudinary environment variables are not set');
+}
 
 // Setup Multer with Cloudinary storage
 const storage = new CloudinaryStorage({
@@ -79,9 +98,32 @@ const isAdmin = (email) => {
 
 // --- API Endpoints ---
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    const healthStatus = {
+        status: 'OK',
+        timestamp: new Date().toISOString(),
+        environment: {
+            mongodb: !!MONGODB_URI,
+            cloudinary: !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET),
+            jwt: !!JWT_SECRET
+        },
+        mongoConnection: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+    };
+    res.json(healthStatus);
+});
+
 // User Registration
 app.post('/api/register', async (req, res) => {
     try {
+        console.log('Registration attempt:', req.body?.email);
+
+        // Check if MongoDB is connected
+        if (mongoose.connection.readyState !== 1) {
+            console.error('MongoDB not connected');
+            return res.status(500).json({ message: 'Database connection error. Please try again later.' });
+        }
+
         const { name, email, password } = req.body;
 
         if (!name || !email || !password) {
@@ -102,16 +144,29 @@ app.post('/api/register', async (req, res) => {
             'Admin account created successfully!' : 
             'Registration successful!';
 
+        console.log('User registered successfully:', email);
         res.status(201).json({ message });
     } catch (error) {
         console.error('Registration error:', error);
-        res.status(500).json({ message: 'Registration failed. Please try again.' });
+        console.error('Error stack:', error.stack);
+        res.status(500).json({ 
+            message: 'Registration failed. Please try again.',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
 // User Login
 app.post('/api/login', async (req, res) => {
     try {
+        console.log('Login attempt:', req.body?.email);
+
+        // Check if MongoDB is connected
+        if (mongoose.connection.readyState !== 1) {
+            console.error('MongoDB not connected');
+            return res.status(500).json({ message: 'Database connection error. Please try again later.' });
+        }
+
         const { email, password } = req.body;
 
         // Find user and check password
@@ -126,6 +181,7 @@ app.post('/api/login', async (req, res) => {
             { expiresIn: '7d' }
         );
 
+        console.log('User logged in successfully:', email);
         res.json({ 
             message: 'Login successful!', 
             token, 
@@ -133,7 +189,11 @@ app.post('/api/login', async (req, res) => {
         });
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ message: 'Login failed. Please try again.' });
+        console.error('Error stack:', error.stack);
+        res.status(500).json({ 
+            message: 'Login failed. Please try again.',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
@@ -247,15 +307,20 @@ app.get('/api/download/:filename', authenticateToken, async (req, res) => {
     }
 });
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', timestamp: new Date().toISOString() });
+// Error handling middleware
+app.use((error, req, res, next) => {
+    console.error('Unhandled error:', error);
+    res.status(500).json({ 
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
 });
 
 // Start the server
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`🚀 Server is running on port ${PORT}`);
     console.log('Available endpoints:');
+    console.log('GET /api/health');
     console.log('POST /api/register');
     console.log('POST /api/login');
     console.log('GET /api/files');
