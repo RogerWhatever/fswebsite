@@ -25,6 +25,17 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Import models at the top level - they'll be available once MongoDB connects
+let User, File;
+
+try {
+    User = require('./models/User');
+    File = require('./models/File');
+    console.log('✅ Models imported successfully');
+} catch (error) {
+    console.error('❌ Failed to import models:', error);
+}
+
 // Simple MongoDB connection for Vercel
 let isConnected = false;
 
@@ -40,11 +51,24 @@ async function connectToDatabase() {
         // Simple connection options that work with all MongoDB versions
         await mongoose.connect(MONGODB_URI, {
             useNewUrlParser: true,
-            useUnifiedTopology: true
+            useUnifiedTopology: true,
+            dbName: 'edushare' // Explicitly specify database name
         });
 
         isConnected = true;
         console.log('✅ Connected to MongoDB Atlas');
+        
+        // Ensure models are loaded after connection
+        if (!User || !File) {
+            try {
+                User = require('./models/User');
+                File = require('./models/File');
+                console.log('✅ Models reloaded after connection');
+            } catch (modelError) {
+                console.error('❌ Failed to reload models:', modelError);
+            }
+        }
+        
         return mongoose.connection;
     } catch (error) {
         console.error('❌ MongoDB connection error:', error.message);
@@ -53,28 +77,12 @@ async function connectToDatabase() {
     }
 }
 
-// Import models after connection setup
-let User, File;
-
-// Initialize models and connection
-async function initializeApp() {
-    if (MONGODB_URI) {
-        try {
-            await connectToDatabase();
-            // Import models only after connection is established
-            User = require('./models/User');
-            File = require('./models/File');
-            console.log('✅ Models loaded successfully');
-        } catch (error) {
-            console.error('❌ Failed to initialize database:', error);
-        }
-    } else {
-        console.error('❌ MONGODB_URI environment variable is not set');
-    }
+// Initialize connection
+if (MONGODB_URI) {
+    connectToDatabase().catch(console.error);
+} else {
+    console.error('❌ MONGODB_URI environment variable is not set');
 }
-
-// Initialize on startup
-initializeApp();
 
 // Configure Cloudinary
 if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
@@ -105,18 +113,31 @@ const upload = multer({
     }
 });
 
-// Middleware to ensure database connection for each request
+// Middleware to ensure database connection and models for each request
 async function ensureDbConnection(req, res, next) {
     try {
+        // Ensure connection
         if (!isConnected || mongoose.connection.readyState !== 1) {
             console.log('Database not connected, attempting to reconnect...');
             await connectToDatabase();
-            // Reload models if needed
-            if (!User || !File) {
+        }
+        
+        // Ensure models are loaded
+        if (!User || !File) {
+            console.log('Models not loaded, attempting to reload...');
+            try {
                 User = require('./models/User');
                 File = require('./models/File');
+                console.log('✅ Models reloaded successfully');
+            } catch (error) {
+                console.error('❌ Failed to reload models:', error);
+                return res.status(500).json({ 
+                    message: 'Model loading error. Please try again later.',
+                    error: error.message 
+                });
             }
         }
+        
         next();
     } catch (error) {
         console.error('Database connection failed:', error);
@@ -210,6 +231,11 @@ app.post('/api/register', ensureDbConnection, async (req, res) => {
     try {
         console.log('Registration attempt:', req.body?.email);
 
+        if (!User) {
+            console.error('User model not available');
+            return res.status(500).json({ message: 'User model not loaded. Please try again.' });
+        }
+
         const { name, email, password } = req.body;
 
         if (!name || !email || !password) {
@@ -246,6 +272,11 @@ app.post('/api/login', ensureDbConnection, async (req, res) => {
     try {
         console.log('Login attempt:', req.body?.email);
 
+        if (!User) {
+            console.error('User model not available');
+            return res.status(500).json({ message: 'User model not loaded. Please try again.' });
+        }
+
         const { email, password } = req.body;
 
         // Find user and check password
@@ -278,6 +309,11 @@ app.post('/api/login', ensureDbConnection, async (req, res) => {
 // Get all files
 app.get('/api/files', ensureDbConnection, async (req, res) => {
     try {
+        if (!File) {
+            console.error('File model not available');
+            return res.status(500).json({ message: 'File model not loaded. Please try again.' });
+        }
+
         const files = await File.find().sort({ createdAt: -1 });
         
         // Transform for frontend compatibility
@@ -400,7 +436,11 @@ app.get('/api/test-mongo', async (req, res) => {
             host: mongoose.connection.host,
             name: mongoose.connection.name,
             database: mongoose.connection.db.databaseName,
-            collections: collections.map(col => col.name)
+            collections: collections.map(col => col.name),
+            models: {
+                User: !!User,
+                File: !!File
+            }
         });
     } catch (error) {
         res.status(500).json({ 
