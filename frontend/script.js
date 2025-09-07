@@ -60,9 +60,22 @@ const subjects = [
 ];
 
 // Dynamic API URL for development and production
-const API_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:3000/api'
-    : `${window.location.origin}/api`;
+const API_URL = (() => {
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+    
+    // If running on Live Server (port 5500) or localhost with port, use local backend
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        if (port === '5500' || port === '') {
+            return 'http://localhost:3000/api';
+        }
+    }
+    
+    // For production (Vercel/Railway), use same origin
+    return `${window.location.origin}/api`;
+})();
+
+console.log('API URL:', API_URL); // Debug log to verify correct URL
 
 // DOM Elements
 const loginBtn = document.getElementById('loginBtn');
@@ -92,8 +105,33 @@ let currentSubject = null;
 let currentUser = null;
 let token = localStorage.getItem('token');
 
+// Test API connection
+async function testAPIConnection() {
+    try {
+        const response = await fetch(`${API_URL}/health`);
+        if (response.ok) {
+            console.log('✅ Backend connection successful');
+            return true;
+        } else {
+            console.error('❌ Backend responded with error:', response.status);
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Cannot connect to backend:', error.message);
+        showNotification('Cannot connect to backend server. Please make sure it\'s running on localhost:3000', 'error');
+        return false;
+    }
+}
+
 // Initialize the application
 async function init() {
+    console.log('🚀 Initializing EduShare...');
+    console.log('Frontend URL:', window.location.origin);
+    console.log('Backend API URL:', API_URL);
+    
+    // Test backend connection
+    await testAPIConnection();
+    
     await checkUserSession();
     renderSubjects();
     updateNavigation();
@@ -258,31 +296,6 @@ function toggleMobileMenu() {
     navMenu.classList.toggle('active');
 }
 
-// Function to handle the login process, used by both login and register
-async function performLogin(email, password) {
-    try {
-        const response = await fetch(`${API_URL}/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-        const data = await response.json();
-
-        if (response.ok) {
-            token = data.token; // Update the global token variable
-            localStorage.setItem('token', token);
-            currentUser = data.user;
-            updateNavigation();
-            showNotification('Login successful!', 'success');
-        } else {
-            showNotification(data.message || 'Login failed', 'error');
-        }
-    } catch (error) {
-        showNotification('Login failed. Please try again.', 'error');
-        console.error('Login error:', error);
-    }
-}
-
 // Handle login form submission
 async function handleLogin(e) {
     e.preventDefault();
@@ -306,34 +319,79 @@ async function handleRegister(e) {
     }
 
     try {
+        console.log('Registering user with API:', API_URL); // Debug log
+        
         const response = await fetch(`${API_URL}/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, email, password })
         });
-        const data = await response.json();
 
-        if (response.ok) {
-            showNotification(data.message, 'success');
-            // Automatically log the user in after successful registration
-            await performLogin(email, password);
-            closeModals();
-        } else {
-            showNotification(data.message || 'Registration failed', 'error');
+        console.log('Register response status:', response.status); // Debug log
+        console.log('Register response headers:', response.headers.get('content-type')); // Debug log
+
+        if (!response.ok) {
+            // Try to parse error response
+            let errorMessage = 'Registration failed';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (parseError) {
+                console.error('Failed to parse error response:', parseError);
+                errorMessage = `Registration failed (${response.status})`;
+            }
+            showNotification(errorMessage, 'error');
+            return;
         }
+
+        const data = await response.json();
+        showNotification(data.message, 'success');
+        
+        // Automatically log the user in after successful registration
+        await performLogin(email, password);
+        closeModals();
     } catch (error) {
-        showNotification('Registration failed. Please try again.', 'error');
         console.error('Registration error:', error);
+        showNotification('Network error. Please make sure the backend server is running on localhost:3000', 'error');
     }
 }
 
-// Handle logout
-function handleLogout() {
-    currentUser = null;
-    localStorage.removeItem('token');
-    token = null; // Also clear the global token variable
-    updateNavigation();
-    showNotification('Logged out successfully', 'success');
+// Function to handle the login process, used by both login and register
+async function performLogin(email, password) {
+    try {
+        console.log('Logging in user with API:', API_URL); // Debug log
+        
+        const response = await fetch(`${API_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        console.log('Login response status:', response.status); // Debug log
+
+        if (!response.ok) {
+            let errorMessage = 'Login failed';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (parseError) {
+                console.error('Failed to parse login error response:', parseError);
+                errorMessage = `Login failed (${response.status})`;
+            }
+            showNotification(errorMessage, 'error');
+            return;
+        }
+
+        const data = await response.json();
+        token = data.token;
+        localStorage.setItem('token', token);
+        currentUser = data.user;
+        updateNavigation();
+        showNotification('Login successful!', 'success');
+    } catch (error) {
+        console.error('Login error:', error);
+        showNotification('Network error. Please make sure the backend server is running on localhost:3000', 'error');
+    }
 }
 
 // Update navigation based on login state
@@ -751,6 +809,15 @@ async function deleteUpload(fileId, fileName) {
     }
 }
 
+// Handle logout
+function handleLogout() {
+    currentUser = null;
+    localStorage.removeItem('token');
+    token = null; // Also clear the global token variable
+    updateNavigation();
+    showNotification('Logged out successfully', 'success');
+}
+
 // Show notification
 function showNotification(message, type) {
     const existingNotification = document.querySelector('.notification');
@@ -786,7 +853,7 @@ function showNotification(message, type) {
         }
     }, 3000);
 }
-// Add these two functions
+
 // Function to load and apply user's dark mode preference
 function loadUserPreferences() {
     const isDarkMode = localStorage.getItem('darkMode') === 'true';
@@ -799,6 +866,19 @@ function loadUserPreferences() {
 }
 
 // Toggle dark mode and save preference
+function toggleDarkMode() {
+    const isDarkMode = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', isDarkMode);
+    
+    if (isDarkMode) {
+        darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+    } else {
+        darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+    }
+}
+
+// Initialize the app when DOM is loaded
+document.addEventListener('DOMContentLoaded', init);
 function toggleDarkMode() {
     const isDarkMode = document.body.classList.toggle('dark-mode');
     localStorage.setItem('darkMode', isDarkMode);
