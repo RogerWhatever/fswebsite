@@ -2,7 +2,7 @@
 
 A collaborative platform for BSC Computer Science students to share and access study materials.
 
-🌐 **Live Website**: https://fswebsite-rho.vercel.app
+🌐 **Live Website**: [fswebsite-umber.vercel.app ](https://fswebsite-umber.vercel.app/)
 
 ## Features
 

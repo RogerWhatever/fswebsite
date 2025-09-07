@@ -61,7 +61,7 @@ section {
 /* Update the main navbar container */
 .navbar {
     display: flex;
-    justify-content: space-between; /* Pushes the left and right containers to the edges */
+    justify-content: space-between;
     align-items: center;
     padding: 1rem 5%;
     position: fixed;
@@ -70,16 +70,15 @@ section {
     left: 0;
     z-index: 1000;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    background-color: rgb(255, 255, 255); 
-    box-shadow: none; /* Remove the shadow */
-    transition: top 0.3s ease-in-out; /* Add a smooth transition */     
+    background-color: var(--nav-background);
+    transition: top 0.3s ease-in-out, background-color 0.4s ease;
 }
 
 /* This is a new CSS rule to contain the middle navigation links */
 .nav-center {
-    flex: 1; /* Makes this container take up all available space */
+    flex: 1;
     display: flex;
-    justify-content: center; /* Centers the links inside this container */
+    justify-content: center;
     align-items: center;
 }
 
@@ -87,7 +86,8 @@ section {
 .nav-auth {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
+    flex-shrink: 0;
 }
 
 .nav-container {
@@ -118,13 +118,13 @@ section {
 .nav-menu {
     list-style: none;
     display: flex;
-    justify-content: center; /* Center the links */
+    justify-content: center;
     align-items: center;
-    gap: 20px;
+    gap: 15px;
 }
 
 .nav-item {
-    margin-left: 35px;
+    margin-left: 20px;
 }
 
 .nav-link {
@@ -151,12 +151,13 @@ section {
 }
 
 .login-btn, .register-btn {
-    padding: 10px 24px;
+    padding: 8px 16px;
     border: none;
     border-radius: 50px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+    font-size: 0.9rem;
 }
 
 .login-btn {
@@ -202,10 +203,11 @@ section {
     background: transparent;
     border: none;
     cursor: pointer;
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     color: var(--dark-grey);
-    padding: 10px;
+    padding: 8px;
     transition: color 0.3s ease;
+    flex-shrink: 0;
 }
 
 .dark-mode-toggle:hover {
@@ -600,7 +602,7 @@ section {
 
 /* My Uploads Button */
 .my-uploads-btn {
-    padding: 10px 24px;
+    padding: 8px 16px;
     border: none;
     border-radius: 50px;
     font-weight: 600;
@@ -608,6 +610,7 @@ section {
     transition: all 0.3s ease;
     background-color: var(--accent-teal);
     color: #fff;
+    font-size: 0.9rem;
 }
 
 .my-uploads-btn:hover {
@@ -1394,11 +1397,12 @@ body.dark-mode .close {
     background-color: transparent;
     border: 2px solid var(--primary-blue);
     color: var(--primary-blue);
-    padding: 10px 24px;
+    padding: 8px 16px;
     border-radius: 50px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+    font-size: 0.9rem;
 }
 
 .logout-btn:hover {
@@ -1461,3 +1465,469 @@ body.dark-mode .text-success { color: #51cf66 !important; }
 body.dark-mode .text-warning { color: #ffd43b !important; }
 body.dark-mode .text-secondary { color: #adb5bd !important; }
 body.dark-mode .text-muted { color: #868e96 !important; }
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .hero {
+        flex-direction: column;
+        text-align: center;
+        margin-top: 120px;
+    }
+    .hero-content {
+        padding-right: 0;
+        margin-bottom: 40px;
+    }
+    .about-content {
+        flex-direction: column;
+    }
+    .about-text {
+        padding-right: 0;
+        margin-bottom: 40px;
+    }
+    .contact-content {
+        flex-direction: column;
+        gap: 40px;
+    }
+    
+    /* Navigation adjustments for tablet */
+    .navbar {
+        padding: 1rem 3%;
+    }
+    
+    .nav-auth {
+        gap: 8px;
+    }
+    
+    .login-btn, .register-btn, .my-uploads-btn, .logout-btn {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+    
+    .dark-mode-toggle {
+        font-size: 1.2rem;
+        padding: 6px;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Mobile navigation */
+    .navbar {
+        padding: 1rem 4%;
+        height: 70px;
+    }
+    
+    .nav-logo {
+        font-size: 1.4rem;
+        z-index: 1001;
+    }
+    
+    .nav-logo i {
+        font-size: 1.6rem;
+    }
+    
+    .nav-center {
+        display: none;
+    }
+    
+    .nav-menu {
+        position: fixed;
+        top: 70px;
+        left: -100%;
+        width: 100%;
+        height: calc(100vh - 70px);
+        background-color: var(--nav-background);
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        transition: left 0.3s ease-in-out;
+        padding-top: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .nav-menu.active {
+        left: 0;
+    }
+    
+    .nav-item {
+        margin: 15px 0;
+        margin-left: 0;
+    }
+    
+    .nav-link {
+        font-size: 1.1rem;
+        padding: 10px 20px;
+    }
+    
+    .nav-auth {
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    
+    .login-btn, .register-btn, .logout-btn {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+    
+    .my-uploads-btn {
+        padding: 6px 8px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+    
+    .dark-mode-toggle {
+        font-size: 1.1rem;
+        padding: 6px;
+    }
+    
+    .hamburger {
+        display: flex;
+        z-index: 1001;
+    }
+    
+    .hamburger.active .bar:nth-child(2) {
+        opacity: 0;
+    }
+    
+    .hamburger.active .bar:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 8px);
+    }
+    
+    .hamburger.active .bar:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -8px);
+    }
+    
+    /* Hero section mobile */
+    .hero {
+        margin: 90px auto 30px;
+        padding: 0 20px;
+        min-height: 70vh;
+    }
+    
+    .hero-content h1 {
+        font-size: 2.2rem;
+        line-height: 1.2;
+    }
+    
+    .hero-content p {
+        font-size: 1rem;
+        margin-bottom: 30px;
+    }
+    
+    .cta-btn {
+        padding: 12px 30px;
+        font-size: 1rem;
+    }
+    
+    /* Sections mobile */
+    section {
+        padding: 60px 0;
+    }
+    
+    .subjects {
+        padding: 0 20px;
+    }
+    
+    .subjects h2,
+    .about h2,
+    .contact h2,
+    .team h2 {
+        font-size: 2rem;
+        margin-bottom: 30px;
+    }
+    
+    .subjects-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .subject-card {
+        padding: 25px 20px;
+    }
+    
+    /* About section mobile */
+    .about {
+        padding: 0 20px;
+    }
+    
+    .about-content {
+        flex-direction: column;
+        gap: 30px;
+    }
+    
+    .about-text {
+        padding-right: 0;
+    }
+    
+    .about-text p {
+        font-size: 1rem;
+        margin-bottom: 25px;
+    }
+    
+    .about-text li {
+        font-size: 0.95rem;
+        margin-bottom: 12px;
+    }
+    
+    /* Contact section mobile */
+    .contact {
+        padding: 0 20px;
+    }
+    
+    .contact-content {
+        flex-direction: column;
+        gap: 30px;
+    }
+    
+    .contact-info,
+    .contact-form {
+        padding: 30px 25px;
+    }
+    
+    .contact-info h3 {
+        font-size: 1.3rem;
+        margin-bottom: 25px;
+    }
+    
+    .contact-info p {
+        font-size: 0.95rem;
+        margin-bottom: 15px;
+    }
+    
+    /* Modal mobile */
+    .modal-content {
+        width: 95%;
+        max-width: 400px;
+        padding: 30px 25px;
+        margin: 20px;
+    }
+    
+    .modal-content h2 {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group input {
+        padding: 12px;
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    .form-btn {
+        padding: 12px;
+        font-size: 1rem;
+    }
+    
+    /* Subject modal mobile */
+    .subject-modal .modal-content {
+        width: 95%;
+        max-width: none;
+        height: 90vh;
+        max-height: 90vh;
+        margin: 5vh auto;
+        padding: 20px;
+    }
+    
+    .unit-tabs {
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+        gap: 5px;
+    }
+    
+    .unit-tab {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+        flex: 1;
+        min-width: 80px;
+        text-align: center;
+    }
+    
+    .upload-section {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .upload-section h4 {
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+    }
+    
+    .upload-form input,
+    .upload-form textarea {
+        padding: 10px;
+        margin-bottom: 12px;
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    .upload-form button {
+        padding: 10px 20px;
+        font-size: 0.95rem;
+    }
+    
+    .file-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        padding: 15px;
+    }
+    
+    .file-actions {
+        align-self: stretch;
+        justify-content: space-between;
+    }
+    
+    /* My uploads modal mobile */
+    .my-uploads-modal {
+        width: 95%;
+        max-width: none;
+        height: 90vh;
+        margin: 5vh auto;
+        padding: 20px;
+    }
+    
+    .upload-item {
+        padding: 15px;
+    }
+    
+    .upload-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .upload-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .upload-actions {
+        gap: 8px;
+    }
+    
+    .action-btn {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+    
+    /* Footer mobile */
+    .footer {
+        padding: 40px 0 20px;
+        margin-top: 60px;
+    }
+    
+    .footer-content {
+        padding: 0 20px;
+        grid-template-columns: 1fr;
+        gap: 30px;
+        text-align: center;
+    }
+    
+    .footer-section h3 {
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+    }
+    
+    .footer-section p {
+        font-size: 0.9rem;
+    }
+    
+    .social-icons {
+        justify-content: center;
+    }
+    
+    .footer-bottom {
+        margin-top: 30px;
+        padding-top: 15px;
+    }
+    
+    .footer-bottom p {
+        font-size: 0.85rem;
+    }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+    .navbar {
+        padding: 0.8rem 3%;
+    }
+    
+    .nav-logo {
+        font-size: 1.2rem;
+    }
+    
+    .nav-logo i {
+        font-size: 1.4rem;
+    }
+    
+    .nav-auth {
+        gap: 4px;
+    }
+    
+    .login-btn, .register-btn, .logout-btn {
+        padding: 5px 8px;
+        font-size: 0.75rem;
+    }
+    
+    .my-uploads-btn {
+        padding: 5px 6px;
+        font-size: 0.7rem;
+    }
+    
+    .dark-mode-toggle {
+        font-size: 1rem;
+        padding: 5px;
+    }
+    
+    .hero {
+        padding: 0 15px;
+        margin: 80px auto 20px;
+    }
+    
+    .hero-content h1 {
+        font-size: 1.8rem;
+    }
+    
+    .hero-content p {
+        font-size: 0.9rem;
+    }
+    
+    .cta-btn {
+        padding: 10px 25px;
+        font-size: 0.9rem;
+    }
+    
+    .subjects, .about, .contact {
+        padding: 0 15px;
+    }
+    
+    .subjects h2, .about h2, .contact h2, .team h2 {
+        font-size: 1.7rem;
+    }
+    
+    .modal-content {
+        padding: 25px 20px;
+    }
+    
+    .subject-modal .modal-content,
+    .my-uploads-modal {
+        padding: 15px;
+    }
+    
+    .footer-content {
+        padding: 0 15px;
+    }
+}
+
+/* Dark mode navbar fix */
+body.dark-mode .navbar {
+    background-color: var(--nav-background);
+}
+
+body.dark-mode .nav-menu {
+    background-color: var(--nav-background);
+}
