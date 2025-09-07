@@ -45,4 +45,5 @@ const fileSchema = new mongoose.Schema({
     timestamps: true
 });
 
-module.exports = mongoose.model('File', fileSchema);
+// This line prevents the model from being re-compiled if it already exists
+module.exports = mongoose.models.File || mongoose.model('File', fileSchema);

@@ -45,4 +45,5 @@ userSchema.methods.comparePassword = async function(password) {
     }
 };
 
-module.exports = mongoose.model('User', userSchema);
+// This line prevents the model from being re-compiled if it already exists
+module.exports = mongoose.models.User || mongoose.model('User', userSchema);
