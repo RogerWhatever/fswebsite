@@ -72,6 +72,7 @@ section {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     background-color: var(--nav-background);
     transition: top 0.3s ease-in-out, background-color 0.4s ease;
+    height: 80px;
 }
 
 /* This is a new CSS rule to contain the middle navigation links */
@@ -114,13 +115,20 @@ section {
     color: var(--accent-teal);
 }
 
-/* Modify this existing CSS rule */
+/* Desktop navigation menu */
 .nav-menu {
     list-style: none;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 15px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 0;
+    height: 100%;
+    margin: 0;
+    padding: 0;
 }
 
 .nav-item {
@@ -1517,6 +1525,11 @@ body.dark-mode .text-muted { color: #868e96 !important; }
         display: none;
     }
     
+    .hamburger {
+        display: flex;
+        z-index: 1001;
+    }
+    
     .nav-menu {
         position: fixed;
         top: 70px;
@@ -1532,6 +1545,8 @@ body.dark-mode .text-muted { color: #868e96 !important; }
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         z-index: 999;
         overflow-y: auto;
+        transform: none; /* Reset desktop transform */
+        margin: 0; /* Reset desktop margin */
     }
     
     /* Mobile menu overlay */

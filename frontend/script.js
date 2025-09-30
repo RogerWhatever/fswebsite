@@ -99,6 +99,7 @@ const navMenu = document.querySelector('.nav-menu');
 const heroCta = document.getElementById('heroCta');
 // Add this line with the other DOM elements
 const darkModeToggle = document.getElementById('darkModeToggle');
+const contactForm = document.getElementById('contactForm');
 
 // Current state
 let currentSubject = null;
@@ -209,6 +210,11 @@ function setupEventListeners() {
     // Form submissions
     loginForm.addEventListener('submit', handleLogin);
     registerForm.addEventListener('submit', handleRegister);
+    
+    // Contact form submission
+    if (contactForm) {
+        contactForm.addEventListener('submit', handleContactFormSubmission);
+    }
     
     // Close modal when clicking outside
     window.addEventListener('click', (e) => {
@@ -967,6 +973,68 @@ async function deleteUpload(fileId, fileName) {
     } catch (error) {
         console.error('Delete error:', error);
         showNotification('Network error: Failed to delete file. Please try again.', 'error');
+    }
+}
+
+// Handle contact form submission with Formspree
+async function handleContactFormSubmission(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const submitBtn = document.getElementById('contactSubmitBtn');
+    const name = document.getElementById('contactName').value.trim();
+    const email = document.getElementById('contactEmail').value.trim();
+    const message = document.getElementById('contactMessage').value.trim();
+    
+    // Client-side validation
+    if (!name || !email || !message) {
+        showNotification('Please fill in all fields', 'error');
+        return;
+    }
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showNotification('Please enter a valid email address', 'error');
+        return;
+    }
+    
+    // Set reply-to field
+    document.getElementById('replyTo').value = email;
+    
+    // Show loading state
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Sending...';
+    submitBtn.disabled = true;
+    
+    try {
+        // Submit to Formspree
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            showNotification('Thank you! Your message has been sent successfully. We\'ll get back to you soon.', 'success');
+            form.reset(); // Clear the form
+        } else {
+            const data = await response.json();
+            if (data.errors) {
+                showNotification(data.errors.map(error => error.message).join(', '), 'error');
+            } else {
+                showNotification('Oops! There was a problem sending your message. Please try again.', 'error');
+            }
+        }
+    } catch (error) {
+        console.error('Contact form error:', error);
+        showNotification('Network error. Please check your connection and try again.', 'error');
+    } finally {
+        // Reset button state
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
     }
 }
 

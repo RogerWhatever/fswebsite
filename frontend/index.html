@@ -17,13 +17,16 @@
     </div>
 
     <div class="nav-center">
-        <ul class="nav-menu">
-            <li class="nav-item"><a href="#home" class="nav-link">Home</a></li>
-            <li class="nav-item"><a href="#subjects" class="nav-link">Subjects</a></li>
-            <li class="nav-item"><a href="#about" class="nav-link">About</a></li>
-            <li class="nav-item"><a href="#contact" class="nav-link">Contact</a></li>
-        </ul>
+        <!-- Desktop nav menu container -->
     </div>
+    
+    <!-- Mobile/Universal nav menu -->
+    <ul class="nav-menu">
+        <li class="nav-item"><a href="#home" class="nav-link">Home</a></li>
+        <li class="nav-item"><a href="#subjects" class="nav-link">Subjects</a></li>
+        <li class="nav-item"><a href="#about" class="nav-link">About</a></li>
+        <li class="nav-item"><a href="#contact" class="nav-link">Contact</a></li>
+    </ul>
 
     <div class="nav-auth">
         <button class="login-btn" id="loginBtn">Login</button>
@@ -158,16 +161,23 @@
                 <p><i class="fas fa-map-marker-alt"></i>Vishwakarma University</p>
             </div>
             <div class="contact-form">
-                <div class="form-group">
-                    <input type="text" placeholder="Your Name" required>
-                </div>
-                <div class="form-group">
-                    <input type="email" placeholder="Your Email" required>
-                </div>
-                <div class="form-group">
-                    <textarea placeholder="Your Message" rows="5" required></textarea>
-                </div>
-                <button type="submit" class="form-btn">Send Message</button>
+                <form id="contactForm" action="https://formspree.io/f/meorgvwn" method="POST">
+                    <div class="form-group">
+                        <input type="text" name="name" id="contactName" placeholder="Your Name" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" name="email" id="contactEmail" placeholder="Your Email" required>
+                    </div>
+                    <div class="form-group">
+                        <textarea name="message" id="contactMessage" placeholder="Your Message" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="form-btn" id="contactSubmitBtn">Send Message</button>
+                    <input type="hidden" name="_subject" value="New contact from EduShare website">
+                    <input type="hidden" name="_replyto" id="replyTo">
+                    <input type="hidden" name="_cc" value="support.edushare@gmail.com">
+                    <input type="hidden" name="_autoresponse" value="Thank you for contacting EduShare! We've received your message and will get back to you within 24 hours.">
+                    <input type="hidden" name="_template" value="table">
+                </form>
             </div>
         </div>
     </section>
