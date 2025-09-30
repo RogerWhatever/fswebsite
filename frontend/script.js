@@ -217,6 +217,16 @@ function setupEventListeners() {
         if (e.target === subjectModal) closeModals();
         if (e.target === myUploadsModal) closeModals();
     });
+    
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', (e) => {
+        const isClickInsideNav = navMenu.contains(e.target) || hamburger.contains(e.target);
+        const isMobileMenuOpen = navMenu.classList.contains('active');
+        
+        if (!isClickInsideNav && isMobileMenuOpen) {
+            toggleMobileMenu();
+        }
+    });
     window.addEventListener('scroll', () => {
     // If the user scrolls down, hide the header
     if (lastScrollY < window.scrollY) {
@@ -232,6 +242,13 @@ function setupEventListeners() {
     
     // Mobile menu toggle
     hamburger.addEventListener('click', toggleMobileMenu);
+    
+    // Add keyboard support for mobile menu
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && navMenu.classList.contains('active')) {
+            toggleMobileMenu();
+        }
+    });
     
     // Smooth scrolling for navigation links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -298,8 +315,17 @@ function closeModals() {
 
 // Toggle mobile menu
 function toggleMobileMenu() {
+    const isActive = hamburger.classList.contains('active');
+    
     hamburger.classList.toggle('active');
     navMenu.classList.toggle('active');
+    
+    // Prevent body scroll when menu is open
+    if (!isActive) {
+        document.body.style.overflow = 'hidden';
+    } else {
+        document.body.style.overflow = 'auto';
+    }
 }
 
 // Handle login form submission
