@@ -17,19 +17,18 @@ A collaborative platform for BSC Computer Science students to share and access s
 
 ## Tech Stack
 
-- **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
-- **Backend**: Node.js, Express.js
-- **Database**: LowDB (JSON-based)
-- **File Storage**: Local filesystem with Multer
-- **Authentication**: JWT tokens
-- **Hosting**: Vercel/Railway
+- **Frontend**: HTML, CSS, JavaScript
+- **Backend**: Node.js, MongoDB
+- **Database**: MongoDB / Local File System
+- **File Storage**: Cloudinary (with MongoDB)
+- **Hosting**: Vercel
 
 ## Local Development
 
 1. Clone the repository
 ```bash
 git clone https://github.com/RogerWhatever/fswebsite.git
-cd edushare-bsc-cs
+cd fswebsite
 ```
 
 2. Install dependencies
@@ -42,7 +41,7 @@ npm install
 npm start
 ```
 
-4. Visit `http://localhost:3000`
+4. Visit `http://127.0.0.1:5500/frontend/index.html` (Use Live Server)
 
 ## Admin Access
 
