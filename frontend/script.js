@@ -234,16 +234,22 @@ function setupEventListeners() {
         }
     });
     window.addEventListener('scroll', () => {
-    // If the user scrolls down, hide the header
-    if (lastScrollY < window.scrollY) {
-        document.querySelector('.navbar').style.top = '-80px'; // Adjust this value if your header height is different
+    const currentScrollY = window.scrollY;
+    
+    // Always show navbar when at the top of the page (within 100px)
+    if (currentScrollY <= 100) {
+        document.querySelector('.navbar').style.top = '0';
+    }
+    // If scrolling down and not at the top, hide the header
+    else if (lastScrollY < currentScrollY) {
+        document.querySelector('.navbar').style.top = '-80px';
     } 
-    // If the user scrolls up, show the header
-    else {
+    // If scrolling up, show the header
+    else if (lastScrollY > currentScrollY) {
         document.querySelector('.navbar').style.top = '0';
     }
 
-    lastScrollY = window.scrollY;
+    lastScrollY = currentScrollY;
     });
     
     // Mobile menu toggle
