@@ -1401,6 +1401,49 @@ body.dark-mode .close {
     color: #e0e0e0;
 }
 
+/* Dark mode navigation buttons */
+body.dark-mode .login-btn {
+    background-color: transparent;
+    color: var(--accent-teal);
+    border: 2px solid var(--accent-teal);
+}
+
+body.dark-mode .login-btn:hover {
+    background-color: var(--accent-teal);
+    color: #fff;
+}
+
+body.dark-mode .register-btn {
+    background-color: var(--accent-teal);
+    color: #fff;
+    border: none;
+}
+
+body.dark-mode .register-btn:hover {
+    background-color: #05b487;
+}
+
+body.dark-mode .my-uploads-btn {
+    background-color: var(--accent-teal);
+    color: #fff;
+    border: none;
+}
+
+body.dark-mode .my-uploads-btn:hover {
+    background-color: #05b487;
+}
+
+body.dark-mode .logout-btn {
+    background-color: transparent;
+    color: var(--accent-teal);
+    border: 2px solid var(--accent-teal);
+}
+
+body.dark-mode .logout-btn:hover {
+    background-color: var(--accent-teal);
+    color: #fff;
+}
+
 /* Add this new CSS rule for the logout button */
 .logout-btn {
     background-color: transparent;
@@ -1567,19 +1610,7 @@ body.dark-mode .text-muted { color: #868e96 !important; }
         border-right: 1px solid rgba(0, 0, 0, 0.1);
     }
     
-    /* Mobile menu overlay */
-    .nav-menu.active::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.4);
-        z-index: -1;
-        opacity: 1;
-        transition: opacity 0.4s ease;
-    }
+    /* Mobile menu overlay - removed for clean solid background */
     
     .nav-menu.active {
         left: 0;
@@ -1985,12 +2016,11 @@ body.dark-mode .navbar {
 }
 
 body.dark-mode .nav-menu {
-    background-color: #000000;
+    background-color: #1e1e1e;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     border-top: none;
 }
 
 body.dark-mode .nav-link:hover {
-    background-color: var(--accent-teal);
     color: white;
 }
