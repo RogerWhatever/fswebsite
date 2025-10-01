@@ -1553,9 +1553,7 @@ body.dark-mode .text-muted { color: #868e96 !important; }
         width: 80%;
         max-width: 300px;
         height: calc(100vh - 70px);
-        background-color: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        background-color: #ffffff;
         flex-direction: column;
         justify-content: flex-start;
         align-items: flex-start;
@@ -1987,7 +1985,7 @@ body.dark-mode .navbar {
 }
 
 body.dark-mode .nav-menu {
-    background-color: rgba(30, 30, 30, 0.95);
+    background-color: #000000;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     border-top: none;
 }
