@@ -27,7 +27,7 @@ A collaborative platform for students to share and access study materials.
 
 1. Clone the repository
 ```bash
-git clone https://github.com/RogerWhatever/fswebsite.git
+git clone https://github.com/RudraAmbike/fswebsite.git
 cd fswebsite
 ```
 
