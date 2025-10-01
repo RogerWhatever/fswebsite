@@ -563,7 +563,7 @@ async function renderUnitContent(unitNumber) {
                     <button type="submit">Upload</button>
                 </form>
             ` : isSyllabus ? 
-                '<p>Only admin@gmail.com can upload syllabus materials</p>' : 
+                '<p>Only Admin can upload syllabus materials</p>' : 
                 '<p>Please login to upload study materials</p>'}
         </div>
     `;
@@ -783,7 +783,7 @@ async function handleFileUpload(e, unitNumber) {
 // Delete file from unit view (admin only)
 async function deleteFileFromUnit(fileId, fileName) {
     if (!isCurrentUserAdmin()) {
-        showNotification('Only admin@gmail.com can delete files', 'error');
+        showNotification('Only Admin can delete files', 'error');
         return;
     }
     
