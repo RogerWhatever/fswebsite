@@ -1,6 +1,6 @@
-# EduShare - BSC CS Study Portal
+# EduShare - Study Portal
 
-A collaborative platform for BSC Computer Science students to share and access study materials.
+A collaborative platform for students to share and access study materials.
 
 🌐 **Live Website**: [fswebsite-umber.vercel.app ](https://fswebsite-umber.vercel.app/)
 
@@ -8,7 +8,7 @@ A collaborative platform for BSC Computer Science students to share and access s
 
 ✅ **User Authentication** - Register/Login system  
 ✅ **File Upload & Download** - Share study materials  
-✅ **Subject Organization** - 8 BSC CS subjects with unit-wise categorization  
+✅ **Subject Organization** - 8 subjects with unit-wise categorization  
 ✅ **Admin Panel** - Special admin privileges for content management  
 ✅ **Syllabus Section** - Admin-only syllabus uploads  
 ✅ **Dark Mode** - Toggle between light and dark themes  
